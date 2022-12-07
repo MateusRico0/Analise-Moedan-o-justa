@@ -1,0 +1,416 @@
+---
+title: 'Inferência estatística e regressão linear'
+subtitle: 'Lista avaliativa 2 -- Probabilidade e Estatística -- 2022.2'
+author: 'fnaufel'
+email: 'https://fnaufel.github.io/'
+date: '   (v. `r format(Sys.Date(), "%d/%m/%Y")`)'
+lang: 'pt-br'
+
+output: 
+  # To install these output formats, run
+  #   install.packages("devtools")
+  #   devtools::install_github("fnaufel/fnaufelRmd")
+  fnaufelRmd::html_report:
+    []
+---
+
+```{r setup, include=FALSE}
+# The next command configures MANY things and loads quite a few packages.
+# 
+# If you want to see what's being done, execute 
+# 
+#   cat(
+#     system.file(
+#       "rmarkdown/resources/R/_common_report.R", 
+#       package = "fnaufelRmd"
+#     )
+#   )
+# 
+# to find out the location of the file. Then open the file.
+# 
+# If you want to change the configuration, copy the file, edit it, and
+# source it instead of the package file. 
+# 
+# Or simply write your commands here in this code chunk.
+
+source(
+  system.file(
+    "rmarkdown/resources/R/_common_report.R",
+    package = "fnaufelRmd"
+  )
+)
+
+```
+
+
+# Instruções {-}
+
+* Clique o botão `Code`, no início desta página, para baixar o arquivo .Rmd deste documento.
+
+* Certifique-se de que o pacote `fnaufelRmd` está instalado. Use os comandos
+
+    ```{r eval=FALSE}
+    install.packages("devtools")
+    devtools::install_github("fnaufel/fnaufelRmd")
+    ```
+  
+* Edite o arquivo .Rmd para resolver a sua questão. 
+
+* Escreva o máximo possível sobre o seu raciocínio. Justifique suas respostas.
+
+* Teste suas respostas. Tudo deve estar executando sem erros.
+
+* [Envie no Moodle ]{.hl} o arquivo .Rmd com as suas resoluções.
+  
+* Bom trabalho.
+
+
+# Ambiente {-}
+
+* Para gerar um arquivo HTML a partir deste documento, você precisa dos seguintes pacotes do R:
+
+  ```{r echo=FALSE, results='asis'}
+  pacotes <- session_info('attached')$packages$package
+  pacotes_tidy <- getNamespace("tidyverse")$core
+  pacotes <- c(
+    setdiff(pacotes, pacotes_tidy),
+    'fnaufelRmd',
+    'devtools'
+  ) %>% 
+    sort()
+   
+  paste('  * `', pacotes, '`', collapse = '\n\n') %>% 
+    cat()
+  ```
+
+* Execute o seguinte código para instalar os pacotes que estão faltando no seu ambiente:
+
+    ```{r message=FALSE, eval=FALSE}
+    if (!require('devtools'))
+      install.packages('devtools')
+    
+    if (!require('fnaufelRmd'))
+      devtools::install_github("fnaufel/fnaufelRmd")
+    
+    pacotes <- c(
+      'conflicted',
+      'kableExtra',
+      'knitr',
+      'latex2exp',
+      'sessioninfo',
+      'summarytools',
+      'tidyverse'
+    )
+    
+    instalar_se_preciso <- function(x) {
+      
+      if (!require(x, character.only = TRUE))
+        install.packages(x)
+      
+    }
+    
+    invisible(sapply(pacotes, instalar_se_preciso))
+    ```
+
+* Se houver erro na instalação, entre em contato com o professor pelo Telegram, [enviando todas as mensagens emitidas quando você executou os comandos]{.hl}.
+
+
+# Moeda
+
+Eu tenho uma moeda, que pode ou não ser justa.
+
+Eu empresto esta moeda para cada um de vocês.
+
+Cada um de vocês lança a moeda $200$ vezes e anota o número de caras obtidas.
+
+Os resultados estão na tabela:
+
+```{r echo=FALSE, out.width='18%'}
+#knitr::include_graphics('tab_lancamentos.png')
+```
+
+<div style='height: 20px'></div>
+  
+::: {.rmdimportant latex=1}
+ 
+Cada item que pede para você construir um intervalo de    confiança ou para você fazer um teste de hipóteses [deve ser   resolvido de duas maneiras]{.hl}:
+ 
+1. Fazendo os cálculos passo a passo, como nos vídeos do   curso, e
+   
+1. Usando as funções prontas do R para IC e testes de    hipótese que foram usadas nos vídeos do curso.
+ 
+:::
+
+<div style='height: 20px'></div>
+
+1. [Usando apenas a linha da tabela que corresponde a você]{.hl}, teste a hipótese de que a moeda é justa --- i.e., em um lançamento, a moeda produz cara com probabilidade $p = 0{,}5$. Use $\alpha = 0{,}05$.
+
+
+1. [Usando apenas a linha da tabela que corresponde a você]{.hl}, construa um intervalo de confiança com nível de confiança de $95\%$ para a verdadeira probabilidade de a moeda produzir cara em um lançamento.
+
+1. A tabela acima foi gerada por mim através de uma simulação. Eu sei a verdadeira probabilidade de a moeda produzir cara em um lançamento. Se todos os alunos responderem a esta questão, quantos dos intervalos de confiança [não vão conter a probabilidade verdadeira]{.hl} de a moeda produzir cara?
+
+## Respostas Moeda
+
+Para começarmos deve ser declarado que o meu ``121050006`` que tem resultaram 77 caras, ou seja, de 200 arremessos, $0{,}385\%$ cairam em cara
+
+### [PARTE 1]{.hl}
+### Hipóteses
+
+* A Hipótese é de nulidade é que a moeda é justa, ou seja, há um chance de$50\%$ sair cara ( COnsequentemente $50\%$ de sair coroa ).
+  $$
+  H_0 : p = 0{,}5
+  $$
+  
+* Hipótese alternativa é que na verdade a moeda não é justa, e as probabilidades de que quando jogada a moeda são diferentes para cara e para coroa
+
+  $$
+  H_0 : p \neq 0{,}5
+  $$
+
+
+  
+### Condições
+
+* Baseando-se no ``TCL`` Precisamos verificar as condições:
+
+  1. [Independência:]{.hl} Cada vez que eu jogar a moeda, ela não mudará o modo como ela se comporta ou as suas probabilidades por causa dos arremessos anteriores
+  
+  1. [Amostra aleatória e representativa:]{.hl} Como usamos a mesma moeda, a amostra que temos, está representando a todo o conjunto de arremessos da moeda
+
+  1. [Tamanho da amostra:]{.hl} Temos $200$ elementos, e levando em conta que a moeda pode ser jogava incontaveis vezes,nossa amostra é menor do que $10\%$
+  
+  1. [Quantidades de sucessos e fracassos potenciais:]{.hl} Considerando que temos $77$ caras, isso nós dá mais de 10 sucessos e 10 fracassos
+  
+### Valores
+
+```{r valores, echo=FALSE}
+n = 200
+p_chapeu = 0.385
+p0 = 0.5
+ep = sqrt(p0 * (1 - p0) / n) #desvio padrao
+p_cauda_direita = p0 + (p0 - p_chapeu)
+```
+
+* Tamanho da amostra: $n = 200$
+
+* Proporção amostral: $\hat p = `r p_chapeu %>% fm()`$
+
+* Hipótese de nulidade: $H_0 : p = 0{,}5$
+
+* Hipótese alternativa: $H_A : p \neq 0{,}5$
+
+* Nível de confiança: $\alpha = 0{,}05$
+  
+  
+Supondo que  $H_0 : p = 0{,}5$ é verdadeiro, teremos que $\hat p$ é equivalente a $p$, sendo assim, e sendo assim calculamos a probabilidade de que consigamos uma amostra como a nossa.
+
+Se essa probabilidade ( De haver amostras como a nossa) for muito baixa, corrobora para que a Hipótese de nulidade seja falsa, se a probabilidade for alta, demostra o esperado, já que as chances de se conseguir uma amostra seguindo a linha de $\hat p$ é alta
+
+* Desvio padrão amostral:
+
+ $$
+  \sigma_{\hat p} 
+  = \sqrt{\frac{p(1-p)}{n}} 
+  = `r ep %>% fm()`
+  $$
+
+Usando o `TCL` e supondo a distribuição normal
+
+```{r echo=FALSE}
+    p_min = (p0 - .1) %>% round(1) 
+    p_max = (p0 + .1) %>% round(1) 
+    brks = c(p_min, p0, p_chapeu, p_cauda_direita, p_max)
+    
+    ggplot() +
+      stat_function(
+        fun = dnorm,
+        args = c(p0, ep),
+        xlim = c(p_min, p_max)
+      ) +
+      stat_function(
+        fun = dnorm,
+        args = c(p0, ep),
+        xlim = c(p_min, p_chapeu),
+        fill = 'red',
+        alpha = .5,
+        geom = 'area'
+      ) +
+      stat_function(
+        fun = dnorm,
+        args = c(p0, ep),
+        xlim = c(p_cauda_direita, p_max),
+        fill = 'red',
+        alpha = .5,
+        geom = 'area'
+      ) +
+      scale_x_continuous(
+        breaks = brks
+      ) +
+      labs(
+        y = NULL
+      )
+```
+
+logo, tem-se que p
+
+```{r}
+    valor_p = 
+      pnorm(p_chapeu, mean = p0, sd = ep) +
+      pnorm(p_cauda_direita, mean = p0, sd = ep, lower.tail = FALSE)
+    valor_p
+```
+
+Como esse valor é menor do que  $\alpha = 0{,}05$, temos indícios de que a Hipótese de nulidade seja falsa,ou seja, que a nossa moeda esta viciada
+
+### Confirmando com o R
+
+```{r}
+prop.test(
+  x = 77,   
+  n = n,  
+  p = p0,     
+  alternative = 'two.sided',
+  conf.level = .95, 
+  correct = FALSE 
+)
+```
+
+Como vemos, o calculo do R concide com o que fizemos,$p = 0,001143$
+
+### [PARTE 2]{.hl}
+
+Levando em conta o erro padrão:
+$$
+  \sigma_{\hat p} 
+  = `r ep %>% fm()`
+$$
+Se quisermos $95\%$ para o intervalo de confiança, precisamos usar $1{,}96$ como o número de desvios padrão. A margem de erro ficará como:
+
+    ```{r}
+    margem = 1.96 * ep
+    ```
+
+$$
+  ME 
+  = `r margem %>% fm()`
+$$
+```{r attr.source='#intervalo'}
+    p_chapeu + c(-1, 1) * margem
+```
+
+O que foi exatamente o que o `R` já havia nos alertado, e calculado para nós antes mesmo de nos preocuparmos com isso
+
+### Confirmando em R (exatamente o mesmo código da PARTE 1)
+
+```{r}
+prop.test(
+  x = 77,   
+  n = n,  
+  p = p0,     
+  alternative = 'two.sided',
+  conf.level = .95, 
+  correct = FALSE 
+)
+```
+
+que nós da o intervalo de confiança de $95\%$, que está entre $0{,}3203331$ e $0{,}4540013$
+
+
+### [PARTE 3]{.hl}
+
+
+
+
+# Lei de Moore para GPUs
+
+A [lei de Moore](https://pt.wikipedia.org/wiki/Lei_de_Moore) estima que, a cada dois anos, o número de transistores em um circuito integrado dobra.
+
+Siga os passos no final do vídeo em https://youtu.be/diUFBf0JUC4 (arquivo .Rmd em https://github.com/fnaufel/CursoProbEst/blob/master/Aulas/23-regressao1/regressao1.Rmd) para examinar a lei de Moore para GPUs:
+
+Use o *dataset* abaixo:
+
+```{r message=FALSE}
+gpus <- 
+  read_csv2(
+    paste0(
+      'https://raw.githubusercontent.com/fnaufel/',
+      'CursoProbEst/master/Aulas/23-regressao1/data/gpus.csv'
+    )
+  ) %>% 
+  select(
+    processador = Processor,
+    transistores = 'Transistor count',
+    ano = 'Date of introduction',
+    fabricante = Manufacturer
+  )
+
+gpus
+```
+
+
+* Analisando graficamente os dados que temos
+
+```{r}
+linear_model1 = lm(transistores~ano, data=gpus) # maybe fit curve
+
+gpus %>% 
+  ggplot(aes(x = ano, y = transistores)) +
+  geom_point()
+```
+
+percebe-se que o grafico tem uma tende a ser exponencial, levando em conta que os transistores dobram, faz sentido que o grafico aja de acordo
+
+Para podermos aplicar as tecnicas de regressão linear, aplicaremos o log ao eixo que dobra a cada 2 anos, que é o eixo dos transistores (eixo-y)
+
+```{r}
+gpus = gpus %>% 
+  mutate(transistores = log10(transistores))
+```
+
+```{r}
+#linear_model1 = lm(transistores~ano, data=gpus) # maybe fit curve
+
+gpus %>% 
+  ggplot(aes(x = ano, y = transistores)) +
+  geom_point()
+```
+
+Agora, o grafico se aproxima a uma relação linear, entre os anos e o crescimento de transistores
+```{r}
+RL = lm(transistores ~ ano, data = gpus)
+```
+
+```{r}
+summary(RL)
+```
+
+A estimativa nos mostra que os registores aumentam $0{,}182338$, logo a cada 2 anos o aumento é de $0{,}364676$
+
+  $$
+  \begin{align*}
+    \log t(n + 2) = \log t(n) + 0{,}364676 
+    & \implies
+      t(n + 2) = t(n) \cdot 10^{0,364676} 
+    & \text{(elevando }10\text{ a cada lado)} \\
+    & \implies 
+      t(n + 2) = 2{,}315 \cdot t(n)
+  \end{align*}
+  $$
+
+Ou seja, de acordo com os nossos dados, na verdade, em media, os transistores mais do que dublicam, tem um aumento de $2{,}315$
+
+```{r}
+gpus %>% 
+  ggplot(aes(x = ano, y = transistores)) +
+  geom_point() +
+  geom_abline(slope = 0.182338, intercept = -357.1896 , color = 'blue')
+```
+
+
+### Olhando os resíduos
+
+
+
+
+<div style='height: 200px'></div>
